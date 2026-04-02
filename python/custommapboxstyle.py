@@ -52,7 +52,7 @@ MAPBOX_TOKEN = "pk.eyJ1Ijoic2xsZW56aWUiLCJhIjoiY21sdG13MjB3MDF5dTNlcHBqZGt0NGVvd
 #   5. Your Style URL looks like: mapbox://styles/yourusername/yourstyleid
 #      (e.g., mapbox://styles/johndoe1/clxabcdef123456)
 #   6. Copy that URL and paste it below
-MAPBOX_STYLE_URL = "mapbox://styles/sllenzie/cmm3t4ib900di01s520v04rtn"
+MAPBOX_STYLE_URL = "mapbox://styles/sllenzie/cmnhm67m2000t01p1hnlc98z3"
 
 # --- Validate that tokens were entered ---
 if MAPBOX_TOKEN == "PASTE_YOUR_MAPBOX_TOKEN_HERE":
