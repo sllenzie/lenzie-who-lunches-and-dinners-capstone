@@ -4,13 +4,337 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lenzie Who Lunches and Dinners</title>
+    <meta name="description" content="A sleek directory of 125 Lenzie Who Lunches and Dinners restaurants with filters for cuisine, attire, and location.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-    <main>
-        <section>
-            <h1>Lenzie Who Lunches and Dinners</h1>
-            <p>This web application was created to fulfill the project requirements for the DCDA Capstone Course in Spring 2026. I wanted to expand the database list that I had already provided in Lab 6, which can be found on my portfolio website for that portion of the class, here.</p>
+    <div class="page-background" aria-hidden="true"></div>
+    <main class="app-shell">
+        <section class="hero panel">
+            <div class="hero__content">
+                <p class="eyebrow">Lenzie Who Lunches and Dinners</p>
+                <h1>Explore 125 restaurants with a bright, filtered guide to where to eat next.</h1>
+                <p class="hero__lede">Browse the collection by cuisine, attire, and location. The map below is the hosted Mapbox/Folium build you already created, and the gallery updates instantly from the CSV.</p>
+                <div class="hero__actions">
+                    <a class="button button--primary" href="#filters">Start filtering</a>
+                    <a class="button button--secondary" href="#map-section">Open the map</a>
+                </div>
+            </div>
+            <div class="hero__stats panel panel--soft">
+                <div>
+                    <span class="stat__label">Restaurants</span>
+                    <strong id="stat-total">125</strong>
+                </div>
+                <div>
+                    <span class="stat__label">Matching now</span>
+                    <strong id="stat-matching">125</strong>
+                </div>
+                <div>
+                    <span class="stat__label">Locations</span>
+                    <strong id="stat-locations">0</strong>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel filters" id="filters" aria-labelledby="filters-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Filter the list</p>
+                    <h2 id="filters-heading">Choose a cuisine, attire, or location.</h2>
+                </div>
+                <p class="section-copy">These controls are built from the CSV data, so the list always reflects your full restaurant set.</p>
+            </div>
+            <div class="filter-grid">
+                <label class="field" for="cuisine-filter">
+                    <span>Cuisine</span>
+                    <select id="cuisine-filter" name="cuisine-filter"></select>
+                </label>
+                <label class="field" for="attire-filter">
+                    <span>Attire</span>
+                    <select id="attire-filter" name="attire-filter"></select>
+                </label>
+                <label class="field" for="location-filter">
+                    <span>Location</span>
+                    <select id="location-filter" name="location-filter"></select>
+                </label>
+                <div class="field field--actions">
+                    <span>&nbsp;</span>
+                    <button class="button button--ghost" id="reset-filters" type="button">Reset filters</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="map-panel panel" id="map-section" aria-labelledby="map-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Hosted map</p>
+                    <h2 id="map-heading">The restaurant map is embedded from your existing build.</h2>
+                </div>
+                <p class="section-copy">No new map build is needed here. This page simply hosts the export you already made with Mapbox styling.</p>
+            </div>
+            <div class="map-frame">
+                <iframe src="data/lenzieswholunchanddinner_map_custom.html" title="Lenzie Who Lunches and Dinners map" loading="lazy"></iframe>
+            </div>
+        </section>
+
+        <section class="gallery-panel" aria-labelledby="gallery-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Restaurant gallery</p>
+                    <h2 id="gallery-heading">Browse the full collection.</h2>
+                </div>
+                <p class="section-copy" id="results-summary">Loading restaurants...</p>
+            </div>
+            <div class="restaurant-grid" id="restaurant-grid" aria-live="polite"></div>
         </section>
     </main>
+
+    <template id="restaurant-card-template">
+        <article class="restaurant-card panel">
+            <div class="restaurant-card__image-wrap">
+                <img class="restaurant-card__image" alt="">
+            </div>
+            <div class="restaurant-card__body">
+                <div class="restaurant-card__topline">
+                    <p class="restaurant-card__location"></p>
+                    <span class="pill"></span>
+                </div>
+                <h3 class="restaurant-card__title"></h3>
+                <p class="restaurant-card__meta"></p>
+                <p class="restaurant-card__description"></p>
+                <div class="restaurant-card__footer">
+                    <a class="button button--primary restaurant-card__link" target="_blank" rel="noopener noreferrer">Visit website</a>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <script>
+        const CSV_PATH = 'data/lenzieswholunchanddinner_geocoded.csv';
+
+        const state = {
+            restaurants: [],
+            filters: {
+                cuisine: 'all',
+                attire: 'all',
+                location: 'all'
+            }
+        };
+
+        const elements = {
+            cuisineFilter: document.getElementById('cuisine-filter'),
+            attireFilter: document.getElementById('attire-filter'),
+            locationFilter: document.getElementById('location-filter'),
+            resetButton: document.getElementById('reset-filters'),
+            totalStat: document.getElementById('stat-total'),
+            matchingStat: document.getElementById('stat-matching'),
+            locationsStat: document.getElementById('stat-locations'),
+            resultsSummary: document.getElementById('results-summary'),
+            grid: document.getElementById('restaurant-grid'),
+            template: document.getElementById('restaurant-card-template')
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function cleanText(value, fallback = 'Not listed') {
+            const text = String(value ?? '').trim();
+            return text || fallback;
+        }
+
+        function parseLocation(address) {
+            const parts = String(address ?? '')
+                .split(',')
+                .map(part => part.trim())
+                .filter(Boolean);
+
+            if (parts.length >= 2) {
+                return parts[parts.length - 2];
+            }
+
+            if (parts.length === 1) {
+                return parts[0];
+            }
+
+            return 'Unknown';
+        }
+
+        function normalizeRow(row) {
+            return {
+                name: cleanText(row.Name, 'Untitled restaurant'),
+                address: cleanText(row.Address, 'Address not listed'),
+                cuisine: cleanText(row.Cuisine, 'Not listed'),
+                attire: cleanText(row.Attire, 'Not listed'),
+                description: cleanText(row.Description, 'No description available.'),
+                website: cleanText(row.Website, ''),
+                imageUrl: cleanText(row.Image_URL, ''),
+                location: parseLocation(row.Address)
+            };
+        }
+
+        function uniqueValues(rows, key) {
+            return [...new Set(rows.map(row => row[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+        }
+
+        function populateSelect(select, values, label) {
+            select.innerHTML = '';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = 'all';
+            defaultOption.textContent = `All ${label}`;
+            select.appendChild(defaultOption);
+
+            values.forEach(value => {
+                const option = document.createElement('option');
+                option.value = value;
+                option.textContent = value;
+                select.appendChild(option);
+            });
+        }
+
+        function setFilterState(key, value) {
+            state.filters[key] = value;
+            render();
+        }
+
+        function matchesFilter(value, filterValue) {
+            return filterValue === 'all' || value === filterValue;
+        }
+
+        function filteredRestaurants() {
+            return state.restaurants.filter(row =>
+                matchesFilter(row.cuisine, state.filters.cuisine) &&
+                matchesFilter(row.attire, state.filters.attire) &&
+                matchesFilter(row.location, state.filters.location)
+            );
+        }
+
+        function updateStats(rows) {
+            elements.totalStat.textContent = state.restaurants.length;
+            elements.matchingStat.textContent = rows.length;
+            elements.locationsStat.textContent = new Set(state.restaurants.map(row => row.location)).size;
+        }
+
+        function createCard(row) {
+            const fragment = elements.template.content.cloneNode(true);
+            const card = fragment.querySelector('.restaurant-card');
+            const image = fragment.querySelector('.restaurant-card__image');
+            const location = fragment.querySelector('.restaurant-card__location');
+            const pill = fragment.querySelector('.pill');
+            const title = fragment.querySelector('.restaurant-card__title');
+            const meta = fragment.querySelector('.restaurant-card__meta');
+            const description = fragment.querySelector('.restaurant-card__description');
+            const link = fragment.querySelector('.restaurant-card__link');
+
+            location.textContent = row.location;
+            pill.textContent = row.attire;
+            title.textContent = row.name;
+            meta.textContent = `${row.cuisine} · ${row.address}`;
+            description.textContent = row.description;
+
+            if (row.imageUrl) {
+                image.src = row.imageUrl;
+                image.alt = row.name;
+            } else {
+                image.remove();
+                card.classList.add('restaurant-card--no-image');
+            }
+
+            if (row.website) {
+                link.href = row.website;
+            } else {
+                link.removeAttribute('href');
+                link.setAttribute('aria-disabled', 'true');
+                link.classList.add('button--disabled');
+                link.textContent = 'Website unavailable';
+            }
+
+            return fragment;
+        }
+
+        function render() {
+            const rows = filteredRestaurants();
+            updateStats(rows);
+            elements.resultsSummary.textContent = rows.length === state.restaurants.length
+                ? 'Showing all restaurants.'
+                : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`;
+
+            elements.grid.innerHTML = '';
+
+            if (!rows.length) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state panel';
+                emptyState.innerHTML = `
+                    <h3>No restaurants match those filters.</h3>
+                    <p>Try loosening one of the filters to see more places in the collection.</p>
+                `;
+                elements.grid.appendChild(emptyState);
+                return;
+            }
+
+            rows.forEach(row => {
+                elements.grid.appendChild(createCard(row));
+            });
+        }
+
+        function resetFilters() {
+            state.filters.cuisine = 'all';
+            state.filters.attire = 'all';
+            state.filters.location = 'all';
+            elements.cuisineFilter.value = 'all';
+            elements.attireFilter.value = 'all';
+            elements.locationFilter.value = 'all';
+            render();
+        }
+
+        function wireControls() {
+            elements.cuisineFilter.addEventListener('change', event => setFilterState('cuisine', event.target.value));
+            elements.attireFilter.addEventListener('change', event => setFilterState('attire', event.target.value));
+            elements.locationFilter.addEventListener('change', event => setFilterState('location', event.target.value));
+            elements.resetButton.addEventListener('click', resetFilters);
+        }
+
+        async function loadRestaurants() {
+            const result = await new Promise((resolve, reject) => {
+                Papa.parse(CSV_PATH, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: resolve,
+                    error: reject
+                });
+            });
+
+            state.restaurants = result.data.map(normalizeRow);
+
+            populateSelect(elements.cuisineFilter, uniqueValues(state.restaurants, 'cuisine'), 'cuisines');
+            populateSelect(elements.attireFilter, uniqueValues(state.restaurants, 'attire'), 'attire styles');
+            populateSelect(elements.locationFilter, uniqueValues(state.restaurants, 'location'), 'locations');
+
+            wireControls();
+            render();
+        }
+
+        loadRestaurants().catch(error => {
+            console.error(error);
+            elements.resultsSummary.textContent = 'The restaurant data could not be loaded.';
+            elements.grid.innerHTML = `
+                <div class="empty-state panel">
+                    <h3>Could not load the CSV.</h3>
+                    <p>Check that <code>${escapeHtml(CSV_PATH)}</code> is available and that the page is being served over HTTP.</p>
+                </div>
+            `;
+        });
+    </script>
 </body>
 </html>
