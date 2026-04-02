@@ -113,9 +113,6 @@
             attireFilter: document.getElementById('attire-filter'),
             locationFilter: document.getElementById('location-filter'),
             resetButton: document.getElementById('reset-filters'),
-            totalStat: document.getElementById('stat-total'),
-            matchingStat: document.getElementById('stat-matching'),
-            locationsStat: document.getElementById('stat-locations'),
             resultsSummary: document.getElementById('results-summary'),
             grid: document.getElementById('restaurant-grid'),
             template: document.getElementById('restaurant-card-template')
@@ -203,9 +200,7 @@
         }
 
         function updateStats(rows) {
-            elements.totalStat.textContent = state.restaurants.length;
-            elements.matchingStat.textContent = rows.length;
-            elements.locationsStat.textContent = new Set(state.restaurants.map(row => row.location)).size;
+            // Stats could be added back if UI elements are created
         }
 
         function createCard(row) {
@@ -288,36 +283,48 @@
         }
 
         async function loadRestaurants() {
-            const result = await new Promise((resolve, reject) => {
-                Papa.parse(CSV_PATH, {
-                    download: true,
-                    header: true,
-                    skipEmptyLines: true,
-                    complete: resolve,
-                    error: reject
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    Papa.parse(CSV_PATH, {
+                        download: true,
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: resolve,
+                        error: reject
+                    });
                 });
-            });
 
-            state.restaurants = result.data.map(normalizeRow);
+                console.log('CSV loaded successfully:', result.data.length, 'rows');
+                
+                state.restaurants = result.data.map(normalizeRow);
+                console.log('Normalized restaurants:', state.restaurants.length);
 
-            populateSelect(elements.cuisineFilter, uniqueValues(state.restaurants, 'cuisine'), 'cuisines');
-            populateSelect(elements.attireFilter, uniqueValues(state.restaurants, 'attire'), 'attire styles');
-            populateSelect(elements.locationFilter, uniqueValues(state.restaurants, 'location'), 'locations');
+                if (state.restaurants.length === 0) {
+                    throw new Error('CSV loaded but contains no data');
+                }
 
-            wireControls();
-            render();
+                populateSelect(elements.cuisineFilter, uniqueValues(state.restaurants, 'cuisine'), 'cuisines');
+                populateSelect(elements.attireFilter, uniqueValues(state.restaurants, 'attire'), 'attire styles');
+                populateSelect(elements.locationFilter, uniqueValues(state.restaurants, 'location'), 'locations');
+
+                console.log('Filters populated successfully');
+                
+                wireControls();
+                render();
+            } catch (error) {
+                console.error('Failed to load restaurants:', error);
+                elements.resultsSummary.textContent = 'The restaurant data could not be loaded.';
+                elements.grid.innerHTML = `
+                    <div class="empty-state panel">
+                        <h3>Could not load the CSV.</h3>
+                        <p>Error: ${escapeHtml(error.message)}</p>
+                        <p>Check that <code>${escapeHtml(CSV_PATH)}</code> is available and the page is served over HTTP (not file://).</p>
+                    </div>
+                `;
+            }
         }
 
-        loadRestaurants().catch(error => {
-            console.error(error);
-            elements.resultsSummary.textContent = 'The restaurant data could not be loaded.';
-            elements.grid.innerHTML = `
-                <div class="empty-state panel">
-                    <h3>Could not load the CSV.</h3>
-                    <p>Check that <code>${escapeHtml(CSV_PATH)}</code> is available and that the page is being served over HTTP.</p>
-                </div>
-            `;
-        });
+        loadRestaurants();
     </script>
 </body>
 </html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lenzie Who Lunches and Dinners | Stella Lenzie</title>
+    <link rel="stylesheet" href="css/styles.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+    <!-- Additional Bootstrap/FontAwesome for markers -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    
+    <!-- Folium Map Styles -->
+    <style>
+                #map_d1e23ec9e351ca7e50806c307d61ff0b {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style><style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style><style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+    
+    <style>
+        /* Map container styling */
+        .map-container {
+            width: 100%;
+            height: 600px;
+            margin: 2rem 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .map-container .folium-map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .map-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <button class="hamburger" aria-label="Toggle navigation menu" aria-expanded="false">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="lab02.html">AI Evaluation</a></li>
+            <li><a href="lab03.html">Tufte Critique</a></li>
+            <li><a href="lab04.html">Tableau Visualization</a></li>
+            <li><a href="lab05.html">Vibe Coding</a></li>
+            <li><a href="lab06.html" class="active">Lenzie Who Lunches and Dinners</a></li>
+        </ul>
+    </nav>
+    
+    <header>
+        <h1>Lenzie Who Lunches and Dinners</h1>
+        <p>A Comprehensive Guide to South Bay Dining</p>
+    </header>
+
+    <main>
+        <section>
+            <h2>Introduction</h2>
+            <p>Welcome to my personal guide to the best restaurants in the South Bay! This interactive map showcases my favorite dining spots, from casual diners to upscale steakhouses. Each location has been carefully selected based on personal experience and includes detailed recommendations.</p>
+            <p>Click on any marker to see information about the restaurant, including cuisine type, dress code, my personal recommendations, and a link to their website. The map uses OpenStreetMap as its base layer for easy navigation.</p>
+        </section>
+
+        <section>
+            <h2>Interactive Restaurant Map</h2>
+            <p>Explore 0 of my favorite South Bay restaurants below. Click on the red markers to learn more about each location!</p>
+            
+            <div class="map-container">
+                <div class="folium-map" id="map_d1e23ec9e351ca7e50806c307d61ff0b" ></div>
+            </div>
+        </section>
+
+        <section>
+            <h2>About This Project</h2>
+            <p>This map was created using Python, pandas for data processing, the Mapbox Geocoding API to convert addresses to coordinates, and Folium to generate the interactive map visualization. All restaurant data, descriptions, and recommendations are based on my personal dining experiences in the South Bay area.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 Stella Lenzie | <a href="https://github.com/sllenzie/DCDA40833-portfolio">GitHub</a></p>
+    </footer>
+    
+    <!-- Back to Top Button -->
+    <button class="back-to-top" aria-label="Back to top">↑</button>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script><script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Map Initialization Script -->
+    <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+</head>
+<body>
+    
+    
+<div style="position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
+     z-index: 1000; background-color: white; padding: 10px 20px;
+     border: 2px solid #8B0000; border-radius: 8px; font-family: Georgia, serif;
+     font-size: 16px; font-weight: bold; color: #8B0000; box-shadow: 2px 2px 6px rgba(0,0,0,0.3);">
+    Lenzie Who Lunches and Dinners
+</div>
+    
+            <div class="folium-map" id="map_d1e23ec9e351ca7e50806c307d61ff0b" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_d1e23ec9e351ca7e50806c307d61ff0b = L.map(
+                "map_d1e23ec9e351ca7e50806c307d61ff0b",
+                {
+                    center: [33.8688, -118.394],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 11,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+
+            
+
+        
+    
+            var tile_layer_2270158378fbfa88b1d522ebaac94cd2 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_2270158378fbfa88b1d522ebaac94cd2.addTo(map_d1e23ec9e351ca7e50806c307d61ff0b);
+        
+    
+            var layer_control_3bf0d6442d6c58c916f5c78cd1cbf888_layers = {
+                base_layers : {
+                    "openstreetmap" : tile_layer_2270158378fbfa88b1d522ebaac94cd2,
+                },
+                overlays :  {
+                },
+            };
+            let layer_control_3bf0d6442d6c58c916f5c78cd1cbf888 = L.control.layers(
+                layer_control_3bf0d6442d6c58c916f5c78cd1cbf888_layers.base_layers,
+                layer_control_3bf0d6442d6c58c916f5c78cd1cbf888_layers.overlays,
+                {
+  "position": "topright",
+  "collapsed": true,
+  "autoZIndex": true,
+}
+            ).addTo(map_d1e23ec9e351ca7e50806c307d61ff0b);
+
+        
+    
+            tile_layer_2270158378fbfa88b1d522ebaac94cd2.addTo(map_d1e23ec9e351ca7e50806c307d61ff0b);
+        
+</script>
+    
+    <!-- Portfolio Navigation Scripts -->
+    <script src="js/menu.js"></script>
+    <script src="js/back-to-top.js"></script>
+</body>
+</html>
