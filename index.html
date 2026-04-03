@@ -8,7 +8,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
     <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
@@ -62,7 +64,7 @@
                 <p class="section-copy">Browse by location on the interactive map below, built with MapBox.</p>
             </div>
             <div class="map-frame">
-                <iframe src="data/lenzieswholunchanddinner_map_custom.html" title="Lenzie Who Lunches and Dinners map" loading="lazy"></iframe>
+                <div id="restaurant-map" aria-label="Interactive restaurant map"></div>
             </div>
         </section>
 
@@ -98,8 +100,18 @@
         </article>
     </template>
 
+    <div class="restaurant-modal" id="restaurant-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="restaurant-modal-title">
+        <div class="restaurant-modal__backdrop" id="restaurant-modal-backdrop"></div>
+        <article class="restaurant-modal__dialog panel" role="document">
+            <button class="restaurant-modal__close" id="restaurant-modal-close" type="button" aria-label="Close details">×</button>
+            <div class="restaurant-modal__content" id="restaurant-modal-content"></div>
+        </article>
+    </div>
+
     <script>
         const CSV_PATH = 'data/lenzieswholunchanddinner_geocoded.csv';
+        const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2xsZW56aWUiLCJhIjoiY21sdG13MjB3MDF5dTNlcHBqZGt0NGVvdSJ9.-DaMTxcKxtsIZSl9_S7wNg';
+        const MAPBOX_STYLE_PATH = 'sllenzie/cmnhm67m2000t01p1hnlc98z3';
 
         const state = {
             restaurants: [],
@@ -110,6 +122,9 @@
             }
         };
 
+        let map;
+        let markerLayer;
+
         const elements = {
             cuisineFilter: document.getElementById('cuisine-filter'),
             attireFilter: document.getElementById('attire-filter'),
@@ -117,8 +132,15 @@
             resetButton: document.getElementById('reset-filters'),
             resultsSummary: document.getElementById('results-summary'),
             grid: document.getElementById('restaurant-grid'),
-            template: document.getElementById('restaurant-card-template')
+            template: document.getElementById('restaurant-card-template'),
+            map: document.getElementById('restaurant-map'),
+            modal: document.getElementById('restaurant-modal'),
+            modalBackdrop: document.getElementById('restaurant-modal-backdrop'),
+            modalClose: document.getElementById('restaurant-modal-close'),
+            modalContent: document.getElementById('restaurant-modal-content')
         };
+
+        let lastFocusedElement = null;
 
         function escapeHtml(value) {
             return String(value ?? '')
@@ -152,6 +174,9 @@
         }
 
         function normalizeRow(row) {
+            const latitude = Number.parseFloat((row.Latitude ?? '').trim());
+            const longitude = Number.parseFloat((row.Longitude ?? '').trim());
+
             return {
                 name: cleanText(row.Name, 'Untitled restaurant'),
                 address: cleanText(row.Address, 'Address not listed'),
@@ -160,8 +185,90 @@
                 description: cleanText(row.Description, 'No description available.'),
                 website: cleanText(row.Website, ''),
                 imageUrl: cleanText(row.Image_URL, ''),
-                location: parseLocation(row.Address)
+                location: parseLocation(row.Address),
+                latitude: Number.isFinite(latitude) ? latitude : null,
+                longitude: Number.isFinite(longitude) ? longitude : null
             };
+        }
+
+        function initializeMap() {
+            map = L.map(elements.map, {
+                center: [33.86, -118.39],
+                zoom: 10,
+                zoomControl: true
+            });
+
+            L.tileLayer(
+                `https://api.mapbox.com/styles/v1/${MAPBOX_STYLE_PATH}/tiles/256/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
+                {
+                    attribution: '&copy; <a href="https://www.mapbox.com/about/maps/">Mapbox</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 18,
+                    tileSize: 256
+                }
+            ).addTo(map);
+
+            markerLayer = L.layerGroup().addTo(map);
+        }
+
+        function popupHtml(row) {
+            const websiteLink = row.website
+                ? `<a class="map-popup__button" href="${escapeHtml(row.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
+                : '<span class="map-popup__button map-popup__button--disabled">Website unavailable</span>';
+
+            const imageHtml = row.imageUrl
+                ? `<img src="${escapeHtml(row.imageUrl)}" alt="${escapeHtml(row.name)}" class="map-popup__image">`
+                : '';
+
+            return `
+                <article class="map-popup-card">
+                    ${imageHtml}
+                    <div class="map-popup-card__body">
+                        <p class="map-popup-card__location">${escapeHtml(row.location)}</p>
+                        <h3 class="map-popup-card__title">${escapeHtml(row.name)}</h3>
+                        <p class="map-popup-card__meta">${escapeHtml(row.cuisine)} · ${escapeHtml(row.attire)}</p>
+                        <p class="map-popup-card__address">${escapeHtml(row.address)}</p>
+                        <p class="map-popup-card__description">${escapeHtml(row.description)}</p>
+                        ${websiteLink}
+                    </div>
+                </article>
+            `;
+        }
+
+        function renderMap(rows) {
+            if (!map || !markerLayer) {
+                return;
+            }
+
+            markerLayer.clearLayers();
+            const coords = [];
+
+            rows.forEach(row => {
+                if (row.latitude === null || row.longitude === null) {
+                    return;
+                }
+
+                const marker = L.circleMarker([row.latitude, row.longitude], {
+                    radius: 6,
+                    color: '#c93f86',
+                    weight: 2,
+                    fillColor: '#ef6da8',
+                    fillOpacity: 0.85
+                });
+
+                marker.bindPopup(popupHtml(row), {
+                    maxWidth: 320,
+                    className: 'map-popup'
+                });
+
+                marker.addTo(markerLayer);
+                coords.push([row.latitude, row.longitude]);
+            });
+
+            if (coords.length === 1) {
+                map.setView(coords[0], 13);
+            } else if (coords.length > 1) {
+                map.fitBounds(coords, { padding: [24, 24], maxZoom: 13 });
+            }
         }
 
         function uniqueValues(rows, key) {
@@ -216,6 +323,10 @@
             const description = fragment.querySelector('.restaurant-card__description');
             const link = fragment.querySelector('.restaurant-card__link');
 
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('aria-label', `Open details for ${row.name}`);
+
             location.textContent = row.location;
             pill.textContent = row.attire;
             title.textContent = row.name;
@@ -239,7 +350,71 @@
                 link.textContent = 'Website unavailable';
             }
 
+            card.addEventListener('click', event => {
+                if (event.target.closest('.restaurant-card__link')) {
+                    return;
+                }
+                openRestaurantModal(row);
+            });
+
+            card.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openRestaurantModal(row);
+                }
+            });
+
             return fragment;
+        }
+
+        function modalHtml(row) {
+            const imageHtml = row.imageUrl
+                ? `<img src="${escapeHtml(row.imageUrl)}" alt="${escapeHtml(row.name)}" class="restaurant-modal__image">`
+                : '';
+
+            const websiteHtml = row.website
+                ? `<a class="button button--primary" href="${escapeHtml(row.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
+                : '<span class="button button--ghost button--disabled">Website unavailable</span>';
+
+            return `
+                ${imageHtml}
+                <div class="restaurant-modal__body">
+                    <p class="eyebrow">${escapeHtml(row.location)}</p>
+                    <h3 id="restaurant-modal-title">${escapeHtml(row.name)}</h3>
+                    <p class="restaurant-modal__meta">${escapeHtml(row.cuisine)} · ${escapeHtml(row.attire)}</p>
+                    <p class="restaurant-modal__address">${escapeHtml(row.address)}</p>
+                    <p class="restaurant-modal__description">${escapeHtml(row.description)}</p>
+                    <div class="restaurant-modal__actions">${websiteHtml}</div>
+                </div>
+            `;
+        }
+
+        function closeRestaurantModal() {
+            elements.modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+                lastFocusedElement = null;
+            }
+        }
+
+        function openRestaurantModal(row) {
+            lastFocusedElement = document.activeElement;
+            elements.modalContent.innerHTML = modalHtml(row);
+            elements.modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            elements.modalClose.focus();
+        }
+
+        function wireModalEvents() {
+            elements.modalClose.addEventListener('click', closeRestaurantModal);
+            elements.modalBackdrop.addEventListener('click', closeRestaurantModal);
+
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && elements.modal.getAttribute('aria-hidden') === 'false') {
+                    closeRestaurantModal();
+                }
+            });
         }
 
         function render() {
@@ -248,6 +423,7 @@
             elements.resultsSummary.textContent = rows.length === state.restaurants.length
                 ? 'Showing all restaurants.'
                 : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`;
+            renderMap(rows);
 
             elements.grid.innerHTML = '';
 
@@ -286,6 +462,8 @@
 
         async function loadRestaurants() {
             try {
+                initializeMap();
+
                 const result = await new Promise((resolve, reject) => {
                     Papa.parse(CSV_PATH, {
                         download: true,
@@ -312,6 +490,7 @@
                 console.log('Filters populated successfully');
                 
                 wireControls();
+                wireModalEvents();
                 render();
             } catch (error) {
                 console.error('Failed to load restaurants:', error);
