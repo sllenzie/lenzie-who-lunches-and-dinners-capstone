@@ -1,8 +1,6 @@
 """
-Project asset checker for Lenzie Who Lunches and Dinners.
-
-This script no longer generates or exports maps.
-It only verifies that existing map/data assets are present.
+this script checks for the presence of the custom Mapbox style HTML file and the geocoded CSV file.
+it reports on their existence and the number of rows in the CSV and does nothing else (finally).
 """
 
 import os

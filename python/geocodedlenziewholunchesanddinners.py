@@ -1,8 +1,5 @@
 """
-Geocode restaurant addresses for the Lenzie Who Lunches and Dinners project.
-
-This script only updates the CSV with Latitude/Longitude values.
-It does not build or export any map HTML files.
+This script reads the Lenzie Who Lunches and Dinners CSV file, geocodes their addresses using the Mapbox Geocoding API, and saves a new CSV with latitude and longitude columns. It also prints a summary of the geocoding results. Horray!
 """
 
 import os
@@ -54,16 +51,12 @@ def geocode_address(address_string: str, token: str) -> Tuple[Optional[float], O
 
 
 def main():
-    if MAPBOX_TOKEN == "PASTE_YOUR_MAPBOX_TOKEN_HERE":
-        print("ERROR: Add your Mapbox token in MAPBOX_TOKEN before running.")
-        return
-
     if not os.path.exists(INPUT_PATH):
         print(f"ERROR: Input file not found: {INPUT_PATH}")
         return
 
     print("=" * 60)
-    print("  Lenzie Who Lunches and Dinners Geocoder")
+    print("Lenzie Who Lunches and Dinners Geocoder")
     print("=" * 60)
 
     df = pd.read_csv(INPUT_PATH)
