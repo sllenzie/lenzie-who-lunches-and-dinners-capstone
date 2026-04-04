@@ -7,6 +7,8 @@ It does not build or export any map HTML files.
 
 import os
 import time
+from typing import Optional, Tuple
+from urllib.parse import quote
 
 import pandas as pd
 import requests
@@ -23,14 +25,14 @@ def _short(text: str, limit: int = 160) -> str:
     return text[:limit] + ("..." if len(text) > limit else "")
 
 
-def geocode_address(address_string: str, token: str):
-    """Return (latitude, longitude) for an address, or (None, None) if unavailable."""
+def geocode_address(address_string: str, token: str) -> Tuple[Optional[float], Optional[float], Optional[int], str]:
+    """Return (latitude, longitude, status_code, note) for an address."""
     if not address_string or "P.O. Box" in address_string or "PO Box" in address_string:
-        return None, None
+        return None, None, None, "skipped-po-box-or-empty"
 
     geocode_url = (
         "https://api.mapbox.com/search/geocode/v6/forward"
-        f"?q={requests.utils.quote(address_string)}"
+        f"?q={quote(address_string)}"
         "&limit=1"
         f"&access_token={token}"
     )
@@ -74,11 +76,11 @@ def main():
     sample_failures = []
 
     print("\nGeocoding addresses with Mapbox...")
-    for i, row in df.iterrows():
-        name = row.get("Name", f"Row {i + 1}")
+    for row_num, (_, row) in enumerate(df.iterrows(), start=1):
+        name = row.get("Name", f"Row {row_num}")
         address = row.get("Address", "")
 
-        print(f"  [{i + 1}/{len(df)}] {name[:45]}...")
+        print(f"  [{row_num}/{len(df)}] {name[:45]}...")
         lat, lon, status, note = geocode_address(address, MAPBOX_TOKEN)
 
         latitudes.append(lat)
