@@ -80,6 +80,18 @@
         </section>
     </main>
 
+    <footer class="site-footer" aria-label="Site footer">
+        <div class="site-footer__inner panel panel--soft">
+            <p class="site-footer__contact">
+                Contact:
+                <a href="mailto:stella.lenzie@gmail.com">stella.lenzie@gmail.com</a>
+                <span class="site-footer__divider" aria-hidden="true">|</span>
+                <a href="https://www.linkedin.com/in/stella-lenzie" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </p>
+            <p class="site-footer__copyright">© <span id="current-year"></span> Stella Lenzie. All rights reserved.</p>
+        </div>
+    </footer>
+
     <template id="restaurant-card-template">
         <article class="restaurant-card panel">
             <div class="restaurant-card__image-wrap">
@@ -112,6 +124,7 @@
         const CSV_PATH = 'data/lenzieswholunchanddinner_geocoded.csv';
         const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2xsZW56aWUiLCJhIjoiY21sdG13MjB3MDF5dTNlcHBqZGt0NGVvdSJ9.-DaMTxcKxtsIZSl9_S7wNg';
         const MAPBOX_STYLE_PATH = 'sllenzie/cmnhm67m2000t01p1hnlc98z3';
+        const FILTER_KEYS = ['cuisine', 'attire', 'location'];
 
         const state = {
             restaurants: [],
@@ -137,7 +150,18 @@
             modal: document.getElementById('restaurant-modal'),
             modalBackdrop: document.getElementById('restaurant-modal-backdrop'),
             modalClose: document.getElementById('restaurant-modal-close'),
-            modalContent: document.getElementById('restaurant-modal-content')
+            modalContent: document.getElementById('restaurant-modal-content'),
+            currentYear: document.getElementById('current-year')
+        };
+
+        if (elements.currentYear) {
+            elements.currentYear.textContent = String(new Date().getFullYear());
+        }
+
+        const filterSelects = {
+            cuisine: elements.cuisineFilter,
+            attire: elements.attireFilter,
+            location: elements.locationFilter
         };
 
         let lastFocusedElement = null;
@@ -308,6 +332,39 @@
             );
         }
 
+        function rowsMatchingFilters(filterOverrides = {}) {
+            return state.restaurants.filter(row =>
+                FILTER_KEYS.every(key => matchesFilter(row[key], filterOverrides[key] ?? state.filters[key]))
+            );
+        }
+
+        function availableValuesForFilter(key) {
+            const rows = rowsMatchingFilters({ [key]: 'all' });
+            return new Set(rows.map(row => row[key]).filter(Boolean));
+        }
+
+        function updateFilterAvailability() {
+            FILTER_KEYS.forEach(key => {
+                const select = filterSelects[key];
+
+                if (!select) {
+                    return;
+                }
+
+                const availableValues = availableValuesForFilter(key);
+
+                [...select.options].forEach(option => {
+                    if (option.value === 'all') {
+                        option.disabled = false;
+                        return;
+                    }
+
+                    const isCurrentSelection = option.value === state.filters[key];
+                    option.disabled = !availableValues.has(option.value) && !isCurrentSelection;
+                });
+            });
+        }
+
         function updateStats(rows) {
             // Stats could be added back if UI elements are created
         }
@@ -419,6 +476,7 @@
 
         function render() {
             const rows = filteredRestaurants();
+            updateFilterAvailability();
             updateStats(rows);
             elements.resultsSummary.textContent = rows.length === state.restaurants.length
                 ? 'Showing all restaurants.'
