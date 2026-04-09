@@ -92,6 +92,8 @@
         </div>
     </footer>
 
+    <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top">Back to top</button>
+
     <template id="restaurant-card-template">
         <article class="restaurant-card panel">
             <div class="restaurant-card__image-wrap">
@@ -151,7 +153,8 @@
             modalBackdrop: document.getElementById('restaurant-modal-backdrop'),
             modalClose: document.getElementById('restaurant-modal-close'),
             modalContent: document.getElementById('restaurant-modal-content'),
-            currentYear: document.getElementById('current-year')
+            currentYear: document.getElementById('current-year'),
+            backToTop: document.getElementById('back-to-top')
         };
 
         if (elements.currentYear) {
@@ -518,6 +521,27 @@
             elements.resetButton.addEventListener('click', resetFilters);
         }
 
+        function updateBackToTopVisibility() {
+            if (!elements.backToTop) {
+                return;
+            }
+
+            elements.backToTop.classList.toggle('is-visible', window.scrollY > 260);
+        }
+
+        function wireBackToTop() {
+            if (!elements.backToTop) {
+                return;
+            }
+
+            elements.backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+            updateBackToTopVisibility();
+        }
+
         async function loadRestaurants() {
             try {
                 initializeMap();
@@ -563,6 +587,7 @@
             }
         }
 
+        wireBackToTop();
         loadRestaurants();
     </script>
 </body>
