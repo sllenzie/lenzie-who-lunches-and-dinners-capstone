@@ -87,6 +87,8 @@
                 <a href="mailto:stella.lenzie@gmail.com">Email</a>
                 <span class="site-footer__divider" aria-hidden="true">|</span>
                 <a href="https://www.linkedin.com/in/stella-lenzie" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+                <span class="site-footer__divider" aria-hidden="true">|</span>
+                <a href="capstone-story.html">Explanation</a>
             </p>
             <p class="site-footer__copyright">© <span id="current-year"></span> Stella Lenzie. All rights reserved.</p>
         </div>
@@ -145,6 +147,7 @@
             attireFilter: document.getElementById('attire-filter'),
             locationFilter: document.getElementById('location-filter'),
             resetButton: document.getElementById('reset-filters'),
+            galleryHeading: document.getElementById('gallery-heading'),
             resultsSummary: document.getElementById('results-summary'),
             grid: document.getElementById('restaurant-grid'),
             template: document.getElementById('restaurant-card-template'),
@@ -482,9 +485,14 @@
             const hasActiveFilters = FILTER_KEYS.some(key => state.filters[key] !== 'all');
             updateFilterAvailability();
             updateStats(rows);
-            elements.resultsSummary.textContent = hasActiveFilters
-                ? 'Showing matching restaurants.'
-                : 'Browse the collection.';
+            if (elements.galleryHeading) {
+                elements.galleryHeading.textContent = hasActiveFilters
+                    ? 'Showing matching restaurants.'
+                    : 'Browse the collection.';
+            }
+            elements.resultsSummary.textContent = rows.length === state.restaurants.length
+                ? 'Showing all restaurants.'
+                : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`;
             renderMap(rows);
 
             elements.grid.innerHTML = '';

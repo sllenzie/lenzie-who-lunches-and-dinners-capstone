@@ -6,6 +6,7 @@ This project combines:
 - A static web app that displays restaurant cards and an interactive map
 - CSV-driven content so updates are simple and data-first
 - A Python geocoding script that enriches the dataset with latitude/longitude via Mapbox
+- A dedicated explanation page that shares the project story and design reasoning
 
 ## Project Goals
 
@@ -22,6 +23,7 @@ This project combines:
 - Modal detail view for each restaurant
 - Multi-filter UI with smart option availability
 - Responsive layout and polished visual design
+- A separate capstone explanation page linked from the footer
 - Python utility to geocode addresses into a new CSV file
 
 ## Tech Stack
@@ -45,6 +47,7 @@ Python utilities:
 ```text
 .
 ├── index.html
+├── capstone-story.html
 ├── README.md
 ├── css/
 │   └── styles.css
@@ -53,11 +56,22 @@ Python utilities:
 │   ├── lenzieswholunchanddinner_geocoded.csv
 │   └── lenzieswholunchanddinner_map_custom.html
 ├── images/
-│   └── stellasassy.jpg
+│   ├── stellasassy.jpg
+│   └── stellasideways.jpg
 └── python/
 	├── geocodedlenziewholunchesanddinners.py
 	└── custommapboxstyle.py
 ```
+
+## Current Navigation
+
+The main page footer links to:
+
+- Email
+- LinkedIn
+- Explanation page (`capstone-story.html`)
+
+The explanation page includes a back link to the main directory.
 
 ## How It Works
 
@@ -185,6 +199,7 @@ To add a new filter category:
 - Main styles are in `css/styles.css`
 - Color system is controlled by CSS custom properties in `:root`
 - Typography uses Fraunces and Space Grotesk from Google Fonts
+- The explanation page includes a small page-specific spacing tweak for eyebrow labels
 
 ### Change map appearance
 

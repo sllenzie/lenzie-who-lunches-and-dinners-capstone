@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>An Explanation | Lenzie Who Lunches and Dinners</title>
+    <meta name="description" content="The story, motivation, and design reasoning behind the Lenzie Who Lunches and Dinners capstone project.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        .story-layout {
+            display: grid;
+            gap: 20px;
+            margin-top: 22px;
+        }
+
+        .story-panel {
+            border-radius: var(--radius-lg);
+            padding: 24px;
+        }
+
+        .story-panel .eyebrow,
+        .hero__content .eyebrow {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .story-panel h2 {
+            margin-bottom: 10px;
+        }
+
+        .story-panel p + p {
+            margin-top: 12px;
+        }
+
+        .story-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        @media (min-width: 900px) {
+            .story-layout {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+
+            .story-layout .story-panel:first-child {
+                grid-row: span 2;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-background" aria-hidden="true"></div>
+
+    <main class="app-shell">
+        <section class="hero panel">
+            <div class="hero__content">
+                <p class="eyebrow">Capstone reflection</p>
+                <h1>Why I Built This Project</h1>
+                <p class="hero__lede">Lenzie Who Lunches and Dinners started as a personal list of restaurants I could confidently recommend to friends, as built in Lab 06 of my Digital Culture and Data Analytics Capstone course. I transformed that list into a useful, searchable experience that blends storytelling, data organization, and map-based exploration, but I wanted the database to be comprehensive, intiutive, and engaging.</p>
+                <div class="story-actions">
+                    <a class="button button--primary" href="index.html">Back to directory</a>
+                    <a class="button button--ghost" href="mailto:stella.lenzie@gmail.com">Contact Stella</a>
+                </div>
+            </div>
+            <figure class="hero__portrait panel--soft">
+                <img src="images/stellasideways.jpg" alt="Stella Lenzie portrait" class="hero__portrait-image">
+            </figure>
+        </section>
+
+        <section class="story-layout" aria-label="Capstone story sections">
+            <article class="panel story-panel">
+                <p class="eyebrow">The motivation</p>
+                <h2>Food Is Memory, Community, and Place</h2>
+                <p>Dining recommendations are often shared casually, but they carry so much detail: the atmosphere, the context, the neighborhood energy, and the small menu decisions or interactions that make a meal more than just the food on the plate. I wanted to preserve that context instead of reducing each place to a rating or star system, and part of how I did this was to only include locations I had a positive enough experience at to remember it, even years later.</p>
+                <p>This capstone gave me the opportunity to combine personal curation with technical implementation. Rather than build a generic restaurant app, which are already a dime a dozen, I focused on a specific voice and point of view: where I would actually send someone and why.</p>
+                <p>The result is intentionally human. It includes subjective notes, practical filters, and a map view that helps people plan by area, not just category, but keeps in mind the things that I would care about, such as attire.</p>
+                <p>There's people who eat to live, and there's people who live to eat. I confidently fall into the latter category, and I hope that translates through the user experience of this site.</p>
+            </article>
+
+            <article class="panel panel--soft story-panel">
+                <p class="eyebrow">Design reasoning</p>
+                <h2>Optimization</h2>
+                <p>I prioritized clarity and personality. The interface stays visual and easy to scan, while still keeping details accessible through cards, map popups, and modal views.</p>
+                <p>I also prioritized flexibility by structuring data in CSV format, which makes it straightforward to maintain and expand over time. In fact, since the initial creation of this site, I've added four more new places!</p>
+            </article>
+
+            <article class="panel panel--soft story-panel">
+                <p class="eyebrow">Technical focus</p>
+                <h2>Demonstration</h2>
+                <p>This project demonstrates front-end development, data cleaning, API-based geocoding, and thoughtful UX decisions in one cohesive workflow.</p>
+                <p>It reflects how I approach product thinking: start with a real user question, then shape the data and interface around that need.</p>
+            </article>
+        </section>
+    </main>
+
+    <footer class="site-footer" aria-label="Site footer">
+        <div class="site-footer__inner panel panel--soft">
+            <p class="site-footer__contact">
+                <a href="index.html">Home</a>
+                <span class="site-footer__divider" aria-hidden="true">|</span>
+                <a href="mailto:stella.lenzie@gmail.com">Email</a>
+                <span class="site-footer__divider" aria-hidden="true">|</span>
+                <a href="https://www.linkedin.com/in/stella-lenzie" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </p>
+            <p class="site-footer__copyright">Made for DCDA Capstone 2026.</p>
+        </div>
+    </footer>
+</body>
+</html>
