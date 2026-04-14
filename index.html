@@ -479,11 +479,12 @@
 
         function render() {
             const rows = filteredRestaurants();
+            const hasActiveFilters = FILTER_KEYS.some(key => state.filters[key] !== 'all');
             updateFilterAvailability();
             updateStats(rows);
-            elements.resultsSummary.textContent = rows.length === state.restaurants.length
-                ? 'Showing all restaurants.'
-                : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`;
+            elements.resultsSummary.textContent = hasActiveFilters
+                ? 'Showing matching restaurants.'
+                : 'Browse the collection.';
             renderMap(rows);
 
             elements.grid.innerHTML = '';
