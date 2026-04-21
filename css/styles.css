@@ -309,6 +309,23 @@ p {
 	border-radius: var(--radius-lg);
 }
 
+.landing-story {
+	margin-top: 22px;
+	padding: 26px;
+	border-radius: var(--radius-lg);
+}
+
+.landing-story__body {
+	display: grid;
+	gap: 16px;
+}
+
+.landing-story__actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
 .section-heading {
 	display: flex;
 	justify-content: space-between;
