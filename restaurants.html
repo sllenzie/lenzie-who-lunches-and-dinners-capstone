@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Restaurant Database | Lenzie Who Lunches and Dinners</title>
+    <meta name="description" content="The full card gallery for the Lenzie Who Lunches and Dinners restaurant database.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+</head>
+<body>
+    <div class="page-background" aria-hidden="true"></div>
+
+    <main class="app-shell">
+        <section class="hero panel">
+            <div class="hero__content">
+                <p class="eyebrow">Full Database</p>
+                <h1>Want to see them all?</h1>
+                <p class="hero__lede">This page shows the entire database all in one place, so you can browse every recommendation without narrowing the list first. Use the main page when you want to filter by cuisine, attire, or location.</p>
+                <div class="hero__actions">
+                    <a class="button button--primary" href="index.html">Back to Home</a>
+                    <a class="button button--ghost" href="capstone-story.html">Read the Full Story</a>
+                </div>
+            </div>
+            <figure class="hero__portrait panel--soft">
+                <img src="images/stellasideways.jpg" alt="Stella Lenzie portrait" class="hero__portrait-image">
+            </figure>
+        </section>
+
+        <section class="gallery-panel gallery-panel--compact" aria-labelledby="gallery-heading">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Complete collection</p>
+                    <h2 id="gallery-heading">All restaurant cards</h2>
+                </div>
+                <p class="section-copy" id="results-summary">Loading restaurants...</p>
+            </div>
+            <div class="restaurant-grid" id="restaurant-grid" aria-live="polite"></div>
+        </section>
+    </main>
+
+    <footer class="site-footer" aria-label="Site footer">
+        <div class="site-footer__inner panel panel--soft">
+            <p class="site-footer__contact">
+                <a href="index.html">Home</a>
+                <span class="site-footer__divider" aria-hidden="true">|</span>
+                <a href="mailto:stella.lenzie@gmail.com">Email</a>
+                <span class="site-footer__divider" aria-hidden="true">|</span>
+                <a href="https://www.linkedin.com/in/stella-lenzie" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            </p>
+            <p class="site-footer__copyright">Made for DCDA Capstone 2026.</p>
+        </div>
+    </footer>
+
+    <button class="back-to-top" id="back-to-top" type="button" aria-label="Back to top">Back to top</button>
+
+    <template id="restaurant-card-template">
+        <article class="restaurant-card panel">
+            <div class="restaurant-card__image-wrap">
+                <img class="restaurant-card__image" alt="">
+            </div>
+            <div class="restaurant-card__body">
+                <div class="restaurant-card__topline">
+                    <p class="restaurant-card__location"></p>
+                    <span class="pill"></span>
+                </div>
+                <h3 class="restaurant-card__title"></h3>
+                <p class="restaurant-card__meta"></p>
+                <p class="restaurant-card__description"></p>
+                <div class="restaurant-card__footer">
+                    <a class="button button--primary restaurant-card__link" target="_blank" rel="noopener noreferrer">Visit website</a>
+                </div>
+            </div>
+        </article>
+    </template>
+
+    <div class="restaurant-modal" id="restaurant-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="restaurant-modal-title">
+        <div class="restaurant-modal__backdrop" id="restaurant-modal-backdrop"></div>
+        <article class="restaurant-modal__dialog panel" role="document">
+            <button class="restaurant-modal__close" id="restaurant-modal-close" type="button" aria-label="Close details">×</button>
+            <div class="restaurant-modal__content" id="restaurant-modal-content"></div>
+        </article>
+    </div>
+
+    <script>
+        const CSV_PATH = 'data/lenzieswholunchanddinner_geocoded.csv';
+
+        const state = {
+            restaurants: []
+        };
+
+        let lastFocusedElement = null;
+
+        const elements = {
+            resultsSummary: document.getElementById('results-summary'),
+            grid: document.getElementById('restaurant-grid'),
+            template: document.getElementById('restaurant-card-template'),
+            modal: document.getElementById('restaurant-modal'),
+            modalBackdrop: document.getElementById('restaurant-modal-backdrop'),
+            modalClose: document.getElementById('restaurant-modal-close'),
+            modalContent: document.getElementById('restaurant-modal-content'),
+            currentYear: document.getElementById('current-year'),
+            backToTop: document.getElementById('back-to-top')
+        };
+
+        if (elements.currentYear) {
+            elements.currentYear.textContent = String(new Date().getFullYear());
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function cleanText(value, fallback = 'Not listed') {
+            const text = String(value ?? '').trim();
+            return text || fallback;
+        }
+
+        function parseLocation(address) {
+            const parts = String(address ?? '')
+                .split(',')
+                .map(part => part.trim())
+                .filter(Boolean);
+
+            if (parts.length >= 2) {
+                return parts[parts.length - 2];
+            }
+
+            if (parts.length === 1) {
+                return parts[0];
+            }
+
+            return 'Unknown';
+        }
+
+        function normalizeRow(row) {
+            const latitude = Number.parseFloat((row.Latitude ?? '').trim());
+            const longitude = Number.parseFloat((row.Longitude ?? '').trim());
+
+            return {
+                name: cleanText(row.Name, 'Untitled restaurant'),
+                address: cleanText(row.Address, 'Address not listed'),
+                cuisine: cleanText(row.Cuisine, 'Not listed'),
+                attire: cleanText(row.Attire, 'Not listed'),
+                description: cleanText(row.Description, 'No description available.'),
+                website: cleanText(row.Website, ''),
+                imageUrl: cleanText(row.Image_URL, ''),
+                location: parseLocation(row.Address),
+                latitude: Number.isFinite(latitude) ? latitude : null,
+                longitude: Number.isFinite(longitude) ? longitude : null
+            };
+        }
+
+        function cleanSummaryText(rowCount) {
+            return rowCount === 1 ? 'Showing 1 restaurant.' : `Showing ${rowCount} restaurants.`;
+        }
+
+        function createCard(row) {
+            const fragment = elements.template.content.cloneNode(true);
+            const card = fragment.querySelector('.restaurant-card');
+            const image = fragment.querySelector('.restaurant-card__image');
+            const location = fragment.querySelector('.restaurant-card__location');
+            const pill = fragment.querySelector('.pill');
+            const title = fragment.querySelector('.restaurant-card__title');
+            const meta = fragment.querySelector('.restaurant-card__meta');
+            const description = fragment.querySelector('.restaurant-card__description');
+            const link = fragment.querySelector('.restaurant-card__link');
+
+            card.setAttribute('role', 'button');
+            card.setAttribute('tabindex', '0');
+            card.setAttribute('aria-label', `Open details for ${row.name}`);
+
+            location.textContent = row.location;
+            pill.textContent = row.attire;
+            title.textContent = row.name;
+            meta.textContent = `${row.cuisine} · ${row.address}`;
+            description.textContent = row.description;
+
+            if (row.imageUrl) {
+                image.src = row.imageUrl;
+                image.alt = row.name;
+            } else {
+                image.remove();
+                card.classList.add('restaurant-card--no-image');
+            }
+
+            if (row.website) {
+                link.href = row.website;
+            } else {
+                link.removeAttribute('href');
+                link.setAttribute('aria-disabled', 'true');
+                link.classList.add('button--disabled');
+                link.textContent = 'Website unavailable';
+            }
+
+            card.addEventListener('click', event => {
+                if (event.target.closest('.restaurant-card__link')) {
+                    return;
+                }
+                openRestaurantModal(row);
+            });
+
+            card.addEventListener('keydown', event => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
+                    openRestaurantModal(row);
+                }
+            });
+
+            return fragment;
+        }
+
+        function modalHtml(row) {
+            const imageHtml = row.imageUrl
+                ? `<img src="${escapeHtml(row.imageUrl)}" alt="${escapeHtml(row.name)}" class="restaurant-modal__image">`
+                : '';
+
+            const websiteHtml = row.website
+                ? `<a class="button button--primary" href="${escapeHtml(row.website)}" target="_blank" rel="noopener noreferrer">Visit website</a>`
+                : '<span class="button button--ghost button--disabled">Website unavailable</span>';
+
+            return `
+                ${imageHtml}
+                <div class="restaurant-modal__body">
+                    <p class="eyebrow">${escapeHtml(row.location)}</p>
+                    <h3 id="restaurant-modal-title">${escapeHtml(row.name)}</h3>
+                    <p class="restaurant-modal__meta">${escapeHtml(row.cuisine)} · ${escapeHtml(row.attire)}</p>
+                    <p class="restaurant-modal__address">${escapeHtml(row.address)}</p>
+                    <p class="restaurant-modal__description">${escapeHtml(row.description)}</p>
+                    <div class="restaurant-modal__actions">${websiteHtml}</div>
+                </div>
+            `;
+        }
+
+        function closeRestaurantModal() {
+            elements.modal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('modal-open');
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+                lastFocusedElement = null;
+            }
+        }
+
+        function openRestaurantModal(row) {
+            lastFocusedElement = document.activeElement;
+            elements.modalContent.innerHTML = modalHtml(row);
+            elements.modal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('modal-open');
+            elements.modalClose.focus();
+        }
+
+        function wireModalEvents() {
+            elements.modalClose.addEventListener('click', closeRestaurantModal);
+            elements.modalBackdrop.addEventListener('click', closeRestaurantModal);
+
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && elements.modal.getAttribute('aria-hidden') === 'false') {
+                    closeRestaurantModal();
+                }
+            });
+        }
+
+        function render() {
+            elements.grid.innerHTML = '';
+
+            if (!state.restaurants.length) {
+                elements.resultsSummary.textContent = 'No restaurants were loaded.';
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state panel';
+                emptyState.innerHTML = `
+                    <h3>Could not load the gallery.</h3>
+                    <p>The restaurant database did not return any rows.</p>
+                `;
+                elements.grid.appendChild(emptyState);
+                return;
+            }
+
+            elements.resultsSummary.textContent = cleanSummaryText(state.restaurants.length);
+
+            state.restaurants.forEach(row => {
+                elements.grid.appendChild(createCard(row));
+            });
+        }
+
+        function updateBackToTopVisibility() {
+            if (!elements.backToTop) {
+                return;
+            }
+
+            elements.backToTop.classList.toggle('is-visible', window.scrollY > 260);
+        }
+
+        function wireBackToTop() {
+            if (!elements.backToTop) {
+                return;
+            }
+
+            elements.backToTop.addEventListener('click', () => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+
+            window.addEventListener('scroll', updateBackToTopVisibility, { passive: true });
+            updateBackToTopVisibility();
+        }
+
+        async function loadRestaurants() {
+            try {
+                const result = await new Promise((resolve, reject) => {
+                    Papa.parse(CSV_PATH, {
+                        download: true,
+                        header: true,
+                        skipEmptyLines: true,
+                        complete: resolve,
+                        error: reject
+                    });
+                });
+
+                state.restaurants = result.data.map(normalizeRow);
+
+                if (state.restaurants.length === 0) {
+                    throw new Error('CSV loaded but contains no data');
+                }
+
+                wireModalEvents();
+                render();
+            } catch (error) {
+                console.error('Failed to load restaurants:', error);
+                elements.resultsSummary.textContent = 'The restaurant data could not be loaded.';
+                elements.grid.innerHTML = `
+                    <div class="empty-state panel">
+                        <h3>Could not load the CSV.</h3>
+                        <p>Error: ${escapeHtml(error.message)}</p>
+                        <p>Check that <code>${escapeHtml(CSV_PATH)}</code> is available and the page is served over HTTP (not file://).</p>
+                    </div>
+                `;
+            }
+        }
+
+        wireBackToTop();
+        loadRestaurants();
+    </script>
+</body>
+</html>

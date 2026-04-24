@@ -518,6 +518,28 @@ p {
 	margin-top: 22px;
 }
 
+.gallery-panel--compact .section-heading {
+	margin-bottom: 12px;
+}
+
+.gallery-panel--compact .section-copy {
+	max-width: 42ch;
+}
+
+.gallery-panel--compact .section-heading,
+.gallery-panel--compact .restaurant-grid {
+	padding-left: 26px;
+	padding-right: 26px;
+}
+
+.gallery-panel--compact .section-heading {
+	padding-top: 26px;
+}
+
+.gallery-panel--compact .restaurant-grid {
+	padding-bottom: 26px;
+}
+
 .restaurant-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));

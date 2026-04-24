@@ -41,6 +41,7 @@
                 <p>Lenzie Who Lunches and Dinners started as a personal list of restaurants I could confidently recommend to friends, as built in Lab 06 of my Digital Culture and Data Analytics Capstone course. I transformed that list into a useful, searchable experience that blends storytelling, data organization, and map-based exploration, but I wanted the database to be comprehensive, intuitive, and engaging.</p>
                 <div class="landing-story__actions">
                     <a class="button button--primary" href="capstone-story.html">Read the Full Story</a>
+                    <a class="button button--ghost" href="restaurants.html">View Full Restaurant Database</a>
                 </div>
             </div>
         </section>
@@ -77,7 +78,7 @@
             <div class="section-heading">
                 <div>
                     <p class="eyebrow">On A Map!</p>
-                    <h2 id="map-heading">Search by Area</h2>
+                    <h2 id="map-heading">Locate by Area</h2>
                 </div>
                 <p class="section-copy">Browse by location on the interactive map below, built with MapBox.</p>
             </div>
@@ -506,14 +507,21 @@
             if (elements.galleryHeading) {
                 elements.galleryHeading.textContent = hasActiveFilters
                     ? 'Showing matching restaurants.'
-                    : 'Browse the collection.';
+                    : 'Filter to reveal restaurant matches.';
             }
-            elements.resultsSummary.textContent = rows.length === state.restaurants.length
-                ? 'Showing all restaurants.'
-                : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`;
-            renderMap(rows);
+            elements.resultsSummary.textContent = hasActiveFilters
+                ? (rows.length === state.restaurants.length
+                    ? 'Showing all matching restaurants.'
+                    : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`)
+                : '';
+
+            renderMap(hasActiveFilters ? rows : []);
 
             elements.grid.innerHTML = '';
+
+            if (!hasActiveFilters) {
+                return;
+            }
 
             if (!rows.length) {
                 const emptyState = document.createElement('div');

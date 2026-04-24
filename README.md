@@ -4,6 +4,7 @@ A curated, interactive restaurant directory featuring Stella Lenzie's personal r
 
 This project combines:
 - A static web app that displays restaurant cards and an interactive map
+- A separate full-collection gallery page for browsing every restaurant card
 - CSV-driven content so updates are simple and data-first
 - A Python geocoding script that enriches the dataset with latitude/longitude via Mapbox
 - A dedicated explanation page that shares the project story and design reasoning
@@ -69,6 +70,7 @@ The main page footer links to:
 
 - Email
 - LinkedIn
+- Full restaurant cards page (`restaurants.html`)
 - Explanation page (`capstone-story.html`)
 
 The explanation page includes a back link to the main directory.
