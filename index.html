@@ -515,7 +515,7 @@
                     : `Showing ${rows.length} of ${state.restaurants.length} restaurants.`)
                 : '';
 
-            renderMap(hasActiveFilters ? rows : []);
+            renderMap(hasActiveFilters ? rows : state.restaurants);
 
             elements.grid.innerHTML = '';
 
