@@ -44,11 +44,7 @@
 
         @media (min-width: 900px) {
             .story-layout {
-                grid-template-columns: 1.1fr 0.9fr;
-            }
-
-            .story-layout .story-panel:first-child {
-                grid-row: span 2;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
             }
         }
     </style>
@@ -61,10 +57,10 @@
             <div class="hero__content">
                 <p class="eyebrow">Capstone reflection</p>
                 <h1>Why I Built This Project</h1>
-                <p class="hero__lede"> <p>Dining recommendations are often shared casually, but they carry so much detail: the atmosphere, the context, the neighborhood energy, and the small menu decisions or interactions that make a meal more than just the food on the plate. I wanted to preserve that context instead of reducing each place to a rating or star system, and part of how I did this was to only include locations I had a positive enough experience at to remember it, even years later.</p>
-                <p>Originally, this was a lab in our Capstone class, to get us used to building with MapBox and to teach us how to geocode data and information based on the addresses of locations in our hometowns. I decided to take it a step further and build an initial database of over fifty restaurants in the Los Angeles area, to have a place for the answer to the question, "What's for dinner?"</p>
-                <p>When it came time to begin the Capstone Project, I felt a little stuck. I had just poured so much time and effort into something that felt it was only half-finished (at best) and now I needed to pivot? I had a meeting with the professors advising the class, and was given the green light to expand upon Lab 06. Cue the confetti!</p>
-                <p>I've been incredibly fortunate to visit a few places around the globe that I have had fabulously memorable meals at, so that was where the first expansion came. I began recalling, with the help of some old credit card statements for the names of certain places, the experiences dating as far back as I could remember. It was a very pleasant trip down memory lane, to recall all the positive experiences and reflect on how the food, atmosphere, and service made me feel at everywhere from the mom-and-pop diners to the elaborate tasting rooms.</p>
+                <p class="hero__lede">Dining recommendations are often shared casually, but they carry so much detail: the atmosphere, the context, the neighborhood energy, and the small menu decisions or interactions that make a meal more than just the food on the plate. I wanted to preserve that context instead of reducing each place to a rating or star system, and part of how I did this was to only include locations I had a positive enough experience at to remember it, even years later.</p>
+                <p>Originally, this started as a class lab designed to introduce Mapbox, geocoding, and location-based data. I turned that exercise into a larger restaurant directory by building an initial dataset of more than fifty Los Angeles restaurants, giving the project a real purpose beyond the assignment prompt.</p>
+                <p>When the capstone phase began, I did not want to abandon the work I had already built. After checking in with my professors, I got permission to expand Lab 06 instead of starting from scratch, which let me focus on improving the data model, user experience, and visual presentation all in one place.</p>
+                <p>The expansion also became a way to document the places I have been fortunate enough to eat around the world. I used old credit card statements and memory to recover names, then organized the records so the site could present each restaurant consistently through cards, filters, and map markers.</p>
                 <div class="story-actions">
                     <a class="button button--primary" href="index.html">Back to Home</a>
                     <a class="button button--ghost" href="mailto:stella.lenzie@gmail.com">Contact Stella</a>
@@ -79,16 +75,19 @@
 
             <article class="panel panel--soft story-panel">
                 <p class="eyebrow">Design reasoning</p>
-                <h2>Optimization</h2>
-                <p>I prioritized clarity and personality. The interface stays visual and easy to scan, while still keeping details accessible through cards, map popups, and modal views.</p>
-                <p>I also prioritized flexibility by structuring data in CSV format, which makes it straightforward to maintain and expand over time. In fact, since the initial creation of this site, I've added four more new places!</p>
+                <h2>Clarity first, personality second</h2>
+                <p>I wanted the interface to feel curated without becoming cluttered. The layout uses large imagery, strong hierarchy, and restrained text blocks so the restaurants remain the focus while the design supports the content.</p>
+                <p>That also shaped the interaction model. Cards surface the essential details, popups keep the map useful, and the modal view lets someone inspect a restaurant without losing their place in the list or on the map.</p>
+                <p>Because the content lives in CSV files, the site stays easy to maintain. Adding or updating a restaurant only requires editing the dataset instead of rebuilding the interface, which made it practical to keep growing the collection over time.</p>
             </article>
 
             <article class="panel panel--soft story-panel">
                 <p class="eyebrow">Technical focus</p>
-                <h2>Demonstration</h2>
-                <p>This project demonstrates front-end development, data cleaning, API-based geocoding, and thoughtful UX decisions in one cohesive workflow.</p>
-                <p>It reflects how I approach product thinking: start with a real user question, then shape the data and interface around that need.</p>
+                <h2>What I built</h2>
+                <p>The project combines front-end development, data processing, and map visualization in one workflow. The site loads restaurant records from CSV, parses them in the browser, and turns them into cards, filters, and interactive map markers.</p>
+                <p>On the backend side of the project, I used Python to geocode the addresses and generate a richer CSV with latitude and longitude values. That step made the mapping layer possible and also kept the dataset reusable for future updates.</p>
+                <p>On the front end, I used HTML, CSS, and vanilla JavaScript with Leaflet and Mapbox tiles to build an interface that responds to different ways of browsing: by cuisine, attire, location, or by clicking directly on the map.</p>
+                <p>Overall, the site reflects how I like to approach product work: define the user question first, organize the data so it can support that question, and then design the interface so the answer is easy to explore.</p>
             </article>
         </section>
     </main>
